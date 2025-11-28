@@ -46,21 +46,25 @@ npx react-vite-starter-kit my-app --no-install
 ## 📁 Templates
 
 ### 🟢 Minimal
+
 Basic React + Vite + TypeScript setup. Perfect for learning or small projects.
 
 **Includes:** React, Vite, TypeScript
 
 ### 🔵 Standard
+
 Recommended setup with routing, state management, and TailwindCSS.
 
 **Includes:** React, Vite, TypeScript, React Router, Redux Toolkit, TailwindCSS
 
 ### 🟣 Full Pack
+
 Everything included! Complete development environment with all bells and whistles.
 
 **Includes:** All Standard features + ESLint, Prettier, Husky, GitHub Actions, VS Code config
 
 ### ⚪ Custom
+
 Build your own! Select exactly what you need.
 
 **Choose from:** React Router, Redux Toolkit, TailwindCSS, ESLint, Prettier, Husky, GitHub Actions, VS Code config
@@ -78,7 +82,7 @@ Build your own! Select exactly what you need.
 
 ## 📂 Project Structure
 
-```
+```bash
 my-app/
 ├── public/
 │   └── index.html
