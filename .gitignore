@@ -1,3 +1,6 @@
+# Deprecated files
+full-pack-DEPRECATED/
+
 # Dependencies
 node_modules/
 .pnp/
