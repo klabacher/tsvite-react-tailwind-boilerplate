@@ -200,89 +200,267 @@ export class TemplateEngine {
   }
 
   /**
+   * Find the matching closing tag for a block, handling nested blocks
+   */
+  private findMatchingClose(
+    template: string,
+    startIndex: number,
+    openTag: string,
+    closeTag: string
+  ): number {
+    let depth = 1;
+    let pos = startIndex;
+
+    while (pos < template.length && depth > 0) {
+      const nextOpen = template.indexOf(openTag, pos);
+      const nextClose = template.indexOf(closeTag, pos);
+
+      if (nextClose === -1) {
+        // No closing tag found
+        return -1;
+      }
+
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        // Found another opening tag first
+        depth++;
+        pos = nextOpen + openTag.length;
+      } else {
+        // Found closing tag
+        depth--;
+        if (depth === 0) {
+          return nextClose;
+        }
+        pos = nextClose + closeTag.length;
+      }
+    }
+
+    return -1;
+  }
+
+  /**
    * Process {{#with object}}...{{/with}} blocks
    */
   private processWithBlocks(template: string, ctx: Record<string, unknown>): string {
-    const withRegex = /\{\{#with\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/with\}\}/g;
+    const openRegex = /\{\{#with\s+(\w+(?:\.\w+)*)\}\}/g;
+    let result = template;
+    let match;
 
-    return template.replace(withRegex, (_match, path, content) => {
-      const value = this.resolvePath(path, ctx);
+    while ((match = openRegex.exec(result)) !== null) {
+      const fullOpenTag = match[0];
+      const pathStr = match[1];
+      const startIndex = match.index;
+      const contentStart = startIndex + fullOpenTag.length;
+      const closeIndex = this.findMatchingClose(result, contentStart, '{{#with', '{{/with}}');
+
+      if (closeIndex === -1) continue;
+
+      const content = result.substring(contentStart, closeIndex);
+      const value = this.resolvePath(pathStr, ctx);
+
+      let replacement = '';
       if (value && typeof value === 'object') {
-        return this.process(content, { ...ctx, ...value });
+        replacement = this.process(content, { ...ctx, ...(value as Record<string, unknown>) });
       }
-      return '';
-    });
+
+      result =
+        result.substring(0, startIndex) +
+        replacement +
+        result.substring(closeIndex + '{{/with}}'.length);
+
+      // Reset regex to search from the start since we modified the string
+      openRegex.lastIndex = 0;
+    }
+
+    return result;
   }
 
   /**
    * Process {{#each array}}...{{/each}} blocks
    */
   private processEachBlocks(template: string, ctx: Record<string, unknown>): string {
-    const eachRegex = /\{\{#each\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+    const openRegex = /\{\{#each\s+(\w+(?:\.\w+)*)\}\}/g;
+    let result = template;
+    let match;
 
-    return template.replace(eachRegex, (_match, path, content) => {
-      const array = this.resolvePath(path, ctx);
+    while ((match = openRegex.exec(result)) !== null) {
+      const fullOpenTag = match[0];
+      const pathStr = match[1];
+      const startIndex = match.index;
+      const contentStart = startIndex + fullOpenTag.length;
+      const closeIndex = this.findMatchingClose(result, contentStart, '{{#each', '{{/each}}');
 
-      if (!Array.isArray(array)) {
-        return '';
+      if (closeIndex === -1) continue;
+
+      const content = result.substring(contentStart, closeIndex);
+      const array = this.resolvePath(pathStr, ctx);
+
+      let replacement = '';
+      if (Array.isArray(array)) {
+        replacement = array
+          .map((item, index) => {
+            const itemCtx = {
+              ...ctx,
+              this: item,
+              '@index': index,
+              '@first': index === 0,
+              '@last': index === array.length - 1,
+            };
+
+            // If item is an object, spread its properties
+            if (typeof item === 'object' && item !== null) {
+              Object.assign(itemCtx, item);
+            }
+
+            return this.process(content, itemCtx);
+          })
+          .join('');
       }
 
-      return array
-        .map((item, index) => {
-          const itemCtx = {
-            ...ctx,
-            this: item,
-            '@index': index,
-            '@first': index === 0,
-            '@last': index === array.length - 1,
-          };
+      result =
+        result.substring(0, startIndex) +
+        replacement +
+        result.substring(closeIndex + '{{/each}}'.length);
 
-          // If item is an object, spread its properties
-          if (typeof item === 'object' && item !== null) {
-            Object.assign(itemCtx, item);
-          }
+      // Reset regex to search from the start since we modified the string
+      openRegex.lastIndex = 0;
+    }
 
-          return this.process(content, itemCtx);
-        })
-        .join('');
-    });
+    return result;
   }
 
   /**
    * Process {{#unless condition}}...{{/unless}} blocks
    */
   private processUnlessBlocks(template: string, ctx: Record<string, unknown>): string {
-    const unlessRegex = /\{\{#unless\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/unless\}\}/g;
+    const openRegex = /\{\{#unless\s+(\w+(?:\.\w+)*)\}\}/g;
+    let result = template;
+    let match;
 
-    return template.replace(unlessRegex, (_match, condition, content) => {
+    while ((match = openRegex.exec(result)) !== null) {
+      const fullOpenTag = match[0];
+      const condition = match[1];
+      const startIndex = match.index;
+      const contentStart = startIndex + fullOpenTag.length;
+      const closeIndex = this.findMatchingClose(result, contentStart, '{{#unless', '{{/unless}}');
+
+      if (closeIndex === -1) continue;
+
+      const content = result.substring(contentStart, closeIndex);
       const value = this.resolvePath(condition, ctx);
-      return !this.isTruthy(value) ? this.process(content, ctx) : '';
-    });
+
+      const replacement = !this.isTruthy(value) ? this.process(content, ctx) : '';
+
+      result =
+        result.substring(0, startIndex) +
+        replacement +
+        result.substring(closeIndex + '{{/unless}}'.length);
+
+      // Reset regex to search from the start since we modified the string
+      openRegex.lastIndex = 0;
+    }
+
+    return result;
   }
 
   /**
-   * Process {{#if condition}}...{{else}}...{{/if}} blocks
+   * Process {{#if condition}}...{{else}}...{{/if}} and {{#if condition}}...{{/if}} blocks
    */
   private processIfElseBlocks(template: string, ctx: Record<string, unknown>): string {
-    const ifElseRegex =
-      /\{\{#if\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g;
+    const openRegex = /\{\{#if\s+(\w+(?:\.\w+)*)\}\}/g;
+    let result = template;
+    let match;
 
-    return template.replace(ifElseRegex, (_match, condition, ifContent, elseContent) => {
+    while ((match = openRegex.exec(result)) !== null) {
+      const fullOpenTag = match[0];
+      const condition = match[1];
+      const startIndex = match.index;
+      const contentStart = startIndex + fullOpenTag.length;
+      const closeIndex = this.findMatchingClose(result, contentStart, '{{#if', '{{/if}}');
+
+      if (closeIndex === -1) continue;
+
+      const fullContent = result.substring(contentStart, closeIndex);
+
+      // Find {{else}} at the same nesting level
+      const elseIndex = this.findElseAtSameLevel(fullContent);
+
+      let ifContent: string;
+      let elseContent: string;
+
+      if (elseIndex !== -1) {
+        ifContent = fullContent.substring(0, elseIndex);
+        elseContent = fullContent.substring(elseIndex + '{{else}}'.length);
+      } else {
+        ifContent = fullContent;
+        elseContent = '';
+      }
+
       const value = this.resolvePath(condition, ctx);
-      return this.isTruthy(value) ? this.process(ifContent, ctx) : this.process(elseContent, ctx);
-    });
+      const replacement = this.isTruthy(value)
+        ? this.process(ifContent, ctx)
+        : this.process(elseContent, ctx);
+
+      result =
+        result.substring(0, startIndex) +
+        replacement +
+        result.substring(closeIndex + '{{/if}}'.length);
+
+      // Reset regex to search from the start since we modified the string
+      openRegex.lastIndex = 0;
+    }
+
+    return result;
+  }
+
+  /**
+   * Find {{else}} at the same nesting level (not inside nested #if blocks)
+   */
+  private findElseAtSameLevel(content: string): number {
+    let depth = 0;
+    let pos = 0;
+
+    while (pos < content.length) {
+      const nextIf = content.indexOf('{{#if', pos);
+      const nextElse = content.indexOf('{{else}}', pos);
+      const nextEndIf = content.indexOf('{{/if}}', pos);
+
+      // Find the earliest occurrence
+      const positions = [
+        { type: 'if', pos: nextIf },
+        { type: 'else', pos: nextElse },
+        { type: 'endif', pos: nextEndIf },
+      ]
+        .filter(p => p.pos !== -1)
+        .sort((a, b) => a.pos - b.pos);
+
+      if (positions.length === 0) break;
+
+      const next = positions[0];
+
+      if (next.type === 'if') {
+        depth++;
+        pos = next.pos + 5; // length of '{{#if'
+      } else if (next.type === 'endif') {
+        depth--;
+        pos = next.pos + 7; // length of '{{/if}}'
+      } else if (next.type === 'else') {
+        if (depth === 0) {
+          return next.pos;
+        }
+        pos = next.pos + 8; // length of '{{else}}'
+      }
+    }
+
+    return -1;
   }
 
   /**
    * Process {{#if condition}}...{{/if}} blocks (without else)
+   * This is now handled by processIfElseBlocks
    */
-  private processIfBlocks(template: string, ctx: Record<string, unknown>): string {
-    const ifRegex = /\{\{#if\s+(\w+(?:\.\w+)*)\}\}([\s\S]*?)\{\{\/if\}\}/g;
-
-    return template.replace(ifRegex, (_match, condition, content) => {
-      const value = this.resolvePath(condition, ctx);
-      return this.isTruthy(value) ? this.process(content, ctx) : '';
-    });
+  private processIfBlocks(template: string, _ctx: Record<string, unknown>): string {
+    // All if blocks are now handled by processIfElseBlocks
+    return template;
   }
 
   /**

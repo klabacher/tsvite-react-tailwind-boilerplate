@@ -2,7 +2,11 @@
 {{!-- This template generates a beautiful, responsive app based on selected features --}}
 
 import './App.css';
+{{#if features.tailwindcss}}
 import { useState, useEffect } from 'react';
+{{else}}
+import { useState } from 'react';
+{{/if}}
 {{#if features.redux}}
 import { useSelector, useDispatch } from 'react-redux';
 import { selectTheme, toggleTheme } from './store/slices/appSlice';
@@ -82,7 +86,7 @@ const RouterLogo = () => (
 {{#if features.i18n}}
 {{!-- Language selector component --}}
 function LanguageSelector({ isDark }: { isDark: boolean }) {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   const languages = [
@@ -267,11 +271,13 @@ function App() {
     dispatch(toggleTheme());
   }
 {{else}}
+{{#if features.tailwindcss}}
   const [isDark, setIsDark] = useState(true);
 
   function handleToggleTheme() {
     setIsDark(!isDark);
   }
+{{/if}}
 {{/if}}
 {{#if features.i18n}}
   const { t } = useTranslation();
@@ -280,6 +286,7 @@ function App() {
   const location = useLocation();
 {{/if}}
 
+{{#if features.tailwindcss}}
 {{#unless features.reactRouter}}
   const [count, setCount] = useState(0);
   const [autoCount, setAutoCount] = useState(0);
@@ -295,6 +302,9 @@ function App() {
     return () => clearInterval(interval);
   }, [isRunning]);
 {{/unless}}
+{{else}}
+  const [count, setCount] = useState(0);
+{{/if}}
 
   return (
 {{#if features.tailwindcss}}

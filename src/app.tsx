@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Box } from 'ink';
+import { join } from 'path';
 import type {
   WizardState,
   ProjectConfig,
@@ -50,6 +51,7 @@ export function App({
       step: skipPrompts && initialProjectName ? 'creating' : 'welcome',
       config: {
         name: initialProjectName,
+        targetDir: initialProjectName ? join(process.cwd(), initialProjectName) : undefined,
         template: template || getDefaultTemplate(),
         features,
         packageManager: 'npm',

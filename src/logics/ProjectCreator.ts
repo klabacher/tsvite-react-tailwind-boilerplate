@@ -92,6 +92,11 @@ async function copyTemplateFiles(config: ProjectConfig): Promise<void> {
 
   // Create vite.svg in public folder
   await writeFile(join(targetDir, 'public', 'vite.svg'), VITE_SVG);
+
+  // Create vite-env.d.ts for TypeScript support of Vite features
+  const viteEnvDts = `/// <reference types="vite/client" />
+`;
+  await writeFile(join(targetDir, 'src', 'vite-env.d.ts'), viteEnvDts);
 }
 
 async function generateConfiguration(config: ProjectConfig): Promise<void> {
@@ -211,6 +216,7 @@ async function generateTsConfigs(targetDir: string, features?: FeatureFlags): Pr
       useDefineForClassFields: true,
       lib: ['ES2020', 'DOM', 'DOM.Iterable'],
       module: 'ESNext',
+      types: ['vite/client'],
       skipLibCheck: true,
       moduleResolution: 'bundler',
       allowImportingTsExtensions: true,
@@ -222,7 +228,6 @@ async function generateTsConfigs(targetDir: string, features?: FeatureFlags): Pr
       noUnusedLocals: true,
       noUnusedParameters: true,
       noFallthroughCasesInSwitch: true,
-      noUncheckedSideEffectImports: true,
     },
     include: ['src'],
   };

@@ -344,7 +344,7 @@ export * from '@testing-library/react';
 
   private getFallbackAppTest(): string {
     return `import { describe, it, expect } from 'vitest';
-import { renderApp } from './test-utils';
+import { renderApp } from '../test/test-utils';
 import App from '../App';
 
 describe('App', () => {
@@ -366,7 +366,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/__tests__/setup.ts'],
+    setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       thresholds: {
