@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2025-11-29
+
+### Changed
+
+- **Minimum Node.js version** bumped from 18.x to 20.x due to `string-width` dependency (used by Ink) requiring the RegExp `v` flag only available in Node.js 20+
+- **GitHub Actions CI** updated to test on Node.js 20.x and 22.x only (removed 18.x)
+
+### Fixed
+
+- **GitHub Actions build failure** - Fixed `SyntaxError: Invalid regular expression flags` error on Node.js 18.x caused by `string-width` package using unsupported RegExp `v` flag
+
 ## [0.0.4] - 2025-11-28
 
 ### Added
