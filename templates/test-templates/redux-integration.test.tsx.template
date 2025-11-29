@@ -3,36 +3,36 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { renderApp, userEvent } from './test-utils';
 {{#if redux}}
 import { Provider } from 'react-redux';
-import { store } from '../Redux/Store';
-import { increment, decrement, reset } from '../Redux/Slice';
+import { store } from '../store/store';
+import { toggleTheme, setTheme, selectTheme } from '../store/slices/appSlice';
 {{/if}}
 {{#if reactRouter}}
 import { Routes, Route, Link } from 'react-router-dom';
 {{/if}}
 
 // Integration test component
-function Counter() {
+function ThemeToggler() {
   {{#if redux}}
-  const count = useSelector((state: any) => state.counter.value);
+  const theme = useSelector(selectTheme);
   const dispatch = useDispatch();
   
   return (
     <div>
-      <span data-testid="count">{count}</span>
-      <button onClick={() => dispatch(increment())} data-testid="increment">+</button>
-      <button onClick={() => dispatch(decrement())} data-testid="decrement">-</button>
-      <button onClick={() => dispatch(reset())} data-testid="reset">Reset</button>
+      <span data-testid="theme">{theme}</span>
+      <button onClick={() => dispatch(toggleTheme())} data-testid="toggle">Toggle</button>
+      <button onClick={() => dispatch(setTheme('light'))} data-testid="set-light">Light</button>
+      <button onClick={() => dispatch(setTheme('dark'))} data-testid="set-dark">Dark</button>
     </div>
   );
   {{else}}
-  const [count, setCount] = React.useState(0);
+  const [theme, setThemeState] = React.useState('dark');
   
   return (
     <div>
-      <span data-testid="count">{count}</span>
-      <button onClick={() => setCount(c => c + 1)} data-testid="increment">+</button>
-      <button onClick={() => setCount(c => c - 1)} data-testid="decrement">-</button>
-      <button onClick={() => setCount(0)} data-testid="reset">Reset</button>
+      <span data-testid="theme">{theme}</span>
+      <button onClick={() => setThemeState(t => t === 'dark' ? 'light' : 'dark')} data-testid="toggle">Toggle</button>
+      <button onClick={() => setThemeState('light')} data-testid="set-light">Light</button>
+      <button onClick={() => setThemeState('dark')} data-testid="set-dark">Dark</button>
     </div>
   );
   {{/if}}
@@ -44,66 +44,60 @@ import React from 'react';
 
 describe('Redux Integration', () => {
   beforeEach(() => {
-    store.dispatch(reset());
+    store.dispatch(setTheme('dark'));
   });
 
-  describe('Counter Component with Redux', () => {
-    it('should display initial count', () => {
-      renderApp(<Counter />);
-      expect(screen.getByTestId('count')).toHaveTextContent('0');
+  describe('ThemeToggler Component with Redux', () => {
+    it('should display initial theme', () => {
+      renderApp(<ThemeToggler />);
+      expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     });
 
-    it('should increment count on button click', async () => {
+    it('should toggle theme on button click', async () => {
       const user = userEvent.setup();
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('increment'));
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      await user.click(screen.getByTestId('toggle'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
     });
 
-    it('should decrement count on button click', async () => {
+    it('should set theme to light', async () => {
       const user = userEvent.setup();
-      store.dispatch(increment());
-      store.dispatch(increment());
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('decrement'));
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      await user.click(screen.getByTestId('set-light'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
     });
 
-    it('should reset count', async () => {
+    it('should set theme to dark', async () => {
       const user = userEvent.setup();
-      store.dispatch(increment());
-      store.dispatch(increment());
-      store.dispatch(increment());
-      renderApp(<Counter />);
+      store.dispatch(setTheme('light'));
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('reset'));
-      expect(screen.getByTestId('count')).toHaveTextContent('0');
+      await user.click(screen.getByTestId('set-dark'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     });
 
-    it('should handle rapid clicks', async () => {
+    it('should handle multiple toggles', async () => {
       const user = userEvent.setup();
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      const incrementBtn = screen.getByTestId('increment');
-      await user.click(incrementBtn);
-      await user.click(incrementBtn);
-      await user.click(incrementBtn);
-      await user.click(incrementBtn);
-      await user.click(incrementBtn);
+      const toggleBtn = screen.getByTestId('toggle');
+      await user.click(toggleBtn); // dark -> light
+      await user.click(toggleBtn); // light -> dark
+      await user.click(toggleBtn); // dark -> light
       
-      expect(screen.getByTestId('count')).toHaveTextContent('5');
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
     });
   });
 
   {{#if reactRouter}}
   describe('Redux with Router Integration', () => {
-    function CounterPage() {
+    function ThemePage() {
       return (
         <div>
-          <h1>Counter Page</h1>
-          <Counter />
+          <h1>Theme Page</h1>
+          <ThemeToggler />
           <Link to="/other" data-testid="other-link">Go to Other</Link>
         </div>
       );
@@ -113,7 +107,7 @@ describe('Redux Integration', () => {
       return (
         <div>
           <h1>Other Page</h1>
-          <Link to="/" data-testid="counter-link">Go to Counter</Link>
+          <Link to="/" data-testid="theme-link">Go to Theme</Link>
         </div>
       );
     }
@@ -121,7 +115,7 @@ describe('Redux Integration', () => {
     function AppWithRouter() {
       return (
         <Routes>
-          <Route path="/" element={<CounterPage />} />
+          <Route path="/" element={<ThemePage />} />
           <Route path="/other" element={<OtherPage />} />
         </Routes>
       );
@@ -131,21 +125,20 @@ describe('Redux Integration', () => {
       const user = userEvent.setup();
       renderApp(<AppWithRouter />, { route: '/' });
       
-      // Increment counter
-      await user.click(screen.getByTestId('increment'));
-      await user.click(screen.getByTestId('increment'));
-      expect(screen.getByTestId('count')).toHaveTextContent('2');
+      // Toggle theme
+      await user.click(screen.getByTestId('toggle'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
       
       // Navigate away
       await user.click(screen.getByTestId('other-link'));
       await waitFor(() => {
-        expect(screen.queryByTestId('count')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('theme')).not.toBeInTheDocument();
       });
       
       // Navigate back
-      await user.click(screen.getByTestId('counter-link'));
+      await user.click(screen.getByTestId('theme-link'));
       await waitFor(() => {
-        expect(screen.getByTestId('count')).toHaveTextContent('2');
+        expect(screen.getByTestId('theme')).toHaveTextContent('light');
       });
     });
   });
@@ -155,38 +148,35 @@ describe('Redux Integration', () => {
 import React from 'react';
 
 describe('Component Integration', () => {
-  describe('Counter Component', () => {
-    it('should display initial count', () => {
-      renderApp(<Counter />);
-      expect(screen.getByTestId('count')).toHaveTextContent('0');
+  describe('ThemeToggler Component', () => {
+    it('should display initial theme', () => {
+      renderApp(<ThemeToggler />);
+      expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     });
 
-    it('should increment count on button click', async () => {
+    it('should toggle theme on button click', async () => {
       const user = userEvent.setup();
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('increment'));
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      await user.click(screen.getByTestId('toggle'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
     });
 
-    it('should decrement count on button click', async () => {
+    it('should set theme to light', async () => {
       const user = userEvent.setup();
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('increment'));
-      await user.click(screen.getByTestId('increment'));
-      await user.click(screen.getByTestId('decrement'));
-      expect(screen.getByTestId('count')).toHaveTextContent('1');
+      await user.click(screen.getByTestId('set-light'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('light');
     });
 
-    it('should reset count', async () => {
+    it('should set theme to dark', async () => {
       const user = userEvent.setup();
-      renderApp(<Counter />);
+      renderApp(<ThemeToggler />);
       
-      await user.click(screen.getByTestId('increment'));
-      await user.click(screen.getByTestId('increment'));
-      await user.click(screen.getByTestId('reset'));
-      expect(screen.getByTestId('count')).toHaveTextContent('0');
+      await user.click(screen.getByTestId('toggle'));
+      await user.click(screen.getByTestId('set-dark'));
+      expect(screen.getByTestId('theme')).toHaveTextContent('dark');
     });
   });
 });

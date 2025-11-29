@@ -1,16 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { store } from '../Redux/Store';
+import { store } from '../store/store';
 import { 
-  increment, 
-  decrement, 
-  incrementByAmount,
-  reset,
-  selectCount 
-} from '../Redux/Slice';
+  toggleTheme, 
+  setTheme,
+  selectTheme 
+} from '../store/slices/appSlice';
 
 describe('Redux Store', () => {
   beforeEach(() => {
-    store.dispatch(reset());
+    store.dispatch(setTheme('dark'));
   });
 
   describe('Store Configuration', () => {
@@ -20,66 +18,57 @@ describe('Redux Store', () => {
       expect(typeof state).toBe('object');
     });
 
-    it('should have counter slice', () => {
+    it('should have app slice', () => {
       const state = store.getState();
-      expect(state.counter).toBeDefined();
+      expect(state.app).toBeDefined();
     });
 
-    it('should have initial count of 0', () => {
+    it('should have initial theme of dark', () => {
       const state = store.getState();
-      expect(selectCount(state)).toBe(0);
+      expect(selectTheme(state)).toBe('dark');
     });
   });
 
-  describe('Counter Actions', () => {
-    it('should increment counter', () => {
-      store.dispatch(increment());
+  describe('Theme Actions', () => {
+    it('should toggle theme from dark to light', () => {
+      store.dispatch(toggleTheme());
       const state = store.getState();
-      expect(selectCount(state)).toBe(1);
+      expect(selectTheme(state)).toBe('light');
     });
 
-    it('should decrement counter', () => {
-      store.dispatch(increment());
-      store.dispatch(increment());
-      store.dispatch(decrement());
+    it('should toggle theme from light to dark', () => {
+      store.dispatch(setTheme('light'));
+      store.dispatch(toggleTheme());
       const state = store.getState();
-      expect(selectCount(state)).toBe(1);
+      expect(selectTheme(state)).toBe('dark');
     });
 
-    it('should increment by amount', () => {
-      store.dispatch(incrementByAmount(5));
+    it('should set theme to light', () => {
+      store.dispatch(setTheme('light'));
       const state = store.getState();
-      expect(selectCount(state)).toBe(5);
+      expect(selectTheme(state)).toBe('light');
     });
 
-    it('should handle negative increment amount', () => {
-      store.dispatch(incrementByAmount(-3));
+    it('should set theme to dark', () => {
+      store.dispatch(setTheme('light'));
+      store.dispatch(setTheme('dark'));
       const state = store.getState();
-      expect(selectCount(state)).toBe(-3);
-    });
-
-    it('should reset to initial state', () => {
-      store.dispatch(increment());
-      store.dispatch(increment());
-      store.dispatch(reset());
-      const state = store.getState();
-      expect(selectCount(state)).toBe(0);
+      expect(selectTheme(state)).toBe('dark');
     });
 
     it('should handle multiple sequential actions', () => {
-      store.dispatch(increment());
-      store.dispatch(incrementByAmount(10));
-      store.dispatch(decrement());
-      store.dispatch(incrementByAmount(5));
+      store.dispatch(toggleTheme()); // dark -> light
+      store.dispatch(toggleTheme()); // light -> dark
+      store.dispatch(toggleTheme()); // dark -> light
       const state = store.getState();
-      expect(selectCount(state)).toBe(15);
+      expect(selectTheme(state)).toBe('light');
     });
   });
 
   describe('Selectors', () => {
-    it('should select count correctly', () => {
-      store.dispatch(incrementByAmount(42));
-      expect(selectCount(store.getState())).toBe(42);
+    it('should select theme correctly', () => {
+      store.dispatch(setTheme('light'));
+      expect(selectTheme(store.getState())).toBe('light');
     });
   });
 
@@ -90,8 +79,8 @@ describe('Redux Store', () => {
         callCount++;
       });
 
-      store.dispatch(increment());
-      store.dispatch(decrement());
+      store.dispatch(toggleTheme());
+      store.dispatch(toggleTheme());
 
       expect(callCount).toBe(2);
       unsubscribe();
