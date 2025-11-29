@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderApp } from './test-utils';
+import { renderApp } from '../test/test-utils';
 import App from '../App';
 
 describe('Tailwind CSS Integration', () => {

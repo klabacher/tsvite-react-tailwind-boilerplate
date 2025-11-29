@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderApp, waitFor } from './test-utils';
+import { renderApp, waitFor } from '../test/test-utils';
 import App from '../App';
 
 describe('Performance Tests', () => {

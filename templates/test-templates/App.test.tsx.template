@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 {{#if custom}}
-import { renderApp, userEvent } from './test-utils';
+import { renderApp, userEvent } from '../test/test-utils';
 {{else}}
-import { renderApp } from './test-utils';
+import { renderApp } from '../test/test-utils';
 {{/if}}
 import App from '../App';
 

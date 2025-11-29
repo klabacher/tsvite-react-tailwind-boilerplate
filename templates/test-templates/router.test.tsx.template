@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderApp, userEvent } from './test-utils';
+import { renderApp, userEvent } from '../test/test-utils';
 import { MemoryRouter, Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 // Mock components for testing
