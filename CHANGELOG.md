@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6] - 2025-11-29
+
+### Fixed
+
+- **TemplateEngine nested conditionals** - Rewrote the template processor to properly handle nested `{{#if}}` blocks using depth-tracking algorithm instead of greedy regex matching
+- **TypeScript CSS imports** - Fixed `Cannot find module './App.css'` error by adding `types: ['vite/client']` to generated `tsconfig.app.json` and removing incompatible `noUncheckedSideEffectImports` flag
+- **Missing targetDir in skip mode** - Fixed "path argument must be of type string" error when using `--yes` flag by properly initializing `targetDir` from `initialProjectName`
+- **Test file import paths** - Fixed test fallback generators to use correct relative import path `../test/test-utils` instead of `./test-utils`
+- **Unused variable in i18n template** - Fixed unused `t` variable in `LanguageSelector` component when i18n is enabled
+- **Conditional variable declarations** - Fixed `handleToggleTheme`, `autoCount`, and `isRunning` variables to only be declared when TailwindCSS is enabled (when the UI components using them are rendered)
+
+### Changed
+
+- **App.tsx template** - Improved conditional rendering logic to avoid declaring unused variables based on feature flags
+- **TemplateEngine** - Added `findElseAtSameLevel()` method to correctly find `{{else}}` blocks at the same nesting depth
+
 ## [0.0.5] - 2025-11-29
 
 ### Added
