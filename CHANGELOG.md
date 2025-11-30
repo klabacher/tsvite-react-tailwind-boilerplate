@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.1] - 2025-11-30
+
+### Added
+
+- **CONTRIBUTING.md** - Comprehensive contributing guide with development setup, code style, commit conventions, and pull request process
+- **CODE_OF_CONDUCT.md** - Contributor Covenant Code of Conduct for community guidelines
+- **SECURITY.md** - Security policy with vulnerability reporting instructions and supported versions
+- **LICENSE** - MIT License file
+- **GitHub Issue Templates** - Bug report and feature request templates with structured forms
+- **Pull Request Template** - Standardized PR template with checklist and description sections
+- **Multi-branch CI/CD workflow** - Comprehensive GitHub Actions workflow with:
+  - Separate handling for dev, beta, and main branches
+  - Automated npm publishing with appropriate tags (beta/latest)
+  - Automated GitHub releases with changelog extraction
+  - Matrix testing on Node.js 20.x, 22.x, and 24.x
+  - Template generation testing for all templates
+
+### Changed
+
+- **README.md** - Complete rewrite with professional documentation:
+  - Comprehensive badges (npm version, downloads, CI status, license, Node.js, TypeScript)
+  - Detailed installation and usage instructions
+  - Complete CLI options table
+  - Feature comparison table by template
+  - Troubleshooting section
+  - Removed emojis for professional tone
+- **package.json** - Updated with correct repository URLs and recommended npm fields:
+  - Fixed homepage, bugs, and repository URLs
+  - Added funding information
+  - Added sideEffects: false for tree-shaking optimization
+  - Updated version to 0.1.0-beta.1
+
+### Fixed
+
+- **Repository URLs** - Corrected all URLs from old repository name to react-vite-starter-kit
+
 ## [0.0.6] - 2025-11-29
 
 ### Fixed

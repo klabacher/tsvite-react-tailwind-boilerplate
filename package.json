@@ -1,6 +1,6 @@
 {
   "name": "react-vite-starter-kit",
-  "version": "0.0.6",
+  "version": "0.1.0-beta.1",
   "description": "Beginner friendly react-vite boilerplate focusing in ready to go personalized react+vite experience",
   "keywords": [
     "boilerplate",
@@ -13,16 +13,21 @@
     "scaffold",
     "starter-kit"
   ],
-  "homepage": "https://github.com/klabacher/tsvite-react-tailwind-boilerplate#readme",
+  "homepage": "https://github.com/klabacher/react-vite-starter-kit#readme",
   "bugs": {
-    "url": "https://github.com/klabacher/tsvite-react-tailwind-boilerplate/issues"
+    "url": "https://github.com/klabacher/react-vite-starter-kit/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/klabacher/tsvite-react-tailwind-boilerplate.git"
+    "url": "git+https://github.com/klabacher/react-vite-starter-kit.git"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/klabacher"
   },
   "license": "MIT",
   "author": "klabacher",
+  "sideEffects": false,
   "type": "module",
   "main": "./dist/main.js",
   "bin": {

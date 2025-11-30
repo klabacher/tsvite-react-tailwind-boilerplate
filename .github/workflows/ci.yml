@@ -2,24 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta, dev]
   pull_request:
-    branches: [main]
+    branches: [main, beta, dev]
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  # Run tests on all branches
+  test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [20.x, 22.x, 24.x]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -35,57 +38,57 @@ jobs:
 
       - name: Run tests
         run: npm run test
-        
+
       - name: Build
         run: npm run build
-# Create a separate job to full build templates and test them individually for each version of node
-  
+
   # Test generated projects for each template
   test-templates:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
         template: [minimal, standard, full-pack]
-        node-version: [20.x, 22.x, 24.x]
-    
+        node-version: [20.x, 22.x]
+
     steps:
-      - uses: actions/checkout@v5
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      
+
       - name: Install CLI dependencies
         run: npm ci
-      
+
       - name: Build CLI
         run: npm run build
-      
+
       - name: Generate ${{ matrix.template }} project
         run: node dist/main.js test-project --template ${{ matrix.template }} --no-git --no-install
-      
+
       - name: Install generated project dependencies
         run: cd test-project && npm install
-      
+
       - name: Build generated project
         run: cd test-project && npm run build
-      
+
       - name: Run generated project tests (if testing enabled)
         run: |
           if [ -f "test-project/vitest.config.ts" ]; then
             cd test-project && npm run test
           fi
 
-  # Publish only after ALL jobs pass successfully
-  publish:
-    needs: [build, test-templates]
+  # Dry-run publish check for dev branch
+  publish-dev-check:
+    needs: [test, test-templates]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -103,8 +106,113 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Uncomment to enable auto-publish
-      # - name: Publish to npm
-      #   run: npm publish
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Dry-run publish
+        run: npm publish --dry-run
+
+  # Publish beta release for beta branch
+  publish-beta:
+    needs: [test, test-templates]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/beta' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Extract version from package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          # Handle multi-line output
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Publish to npm with beta tag
+        run: npm publish --tag beta
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.notes }}
+          prerelease: true
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publish stable release for main branch
+  publish-stable:
+    needs: [test, test-templates]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Extract version from package.json
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          # Handle multi-line output
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Publish to npm with latest tag
+        run: npm publish --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.notes }}
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
