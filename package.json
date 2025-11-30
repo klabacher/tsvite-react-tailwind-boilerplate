@@ -18,7 +18,6 @@
     "url": "https://github.com/klabacher/tsvite-react-tailwind-boilerplate/issues"
   },
   "repository": {
-    "type": "git",
     "url": "git+https://github.com/klabacher/tsvite-react-tailwind-boilerplate.git"
   },
   "license": "MIT",
