@@ -28,7 +28,7 @@
             : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:shadow-green-500/25'
         }`}
       >
-        {isRunning ? {{#if features.i18n}}t('common.stop'){{else}}'Stop'{{/if}} : {{#if features.i18n}}t('common.start'){{else}}'Start'{{/if}}}
+        {{#if features.i18n}}{isRunning ? t('common.stop') : t('common.start')}{{else}}{isRunning ? 'Stop' : 'Start'}{{/if}}
       </button>
       <button
         onClick={() => setAutoCount(0)}
