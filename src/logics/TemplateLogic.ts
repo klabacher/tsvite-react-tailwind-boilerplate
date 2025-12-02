@@ -3,19 +3,20 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, readFileSync } from 'fs';
 import type { FeatureFlags } from '../types/index.js';
-import { createTemplateEngine, type TemplateContext } from './TemplateEngine.js';
+import { createTemplateEngineFromFeatures, type TemplateContext } from './TemplateEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Path to templates directory (relative to dist or src)
+/**
+ * Get the templates directory path
+ */
 function getTemplatesDir(): string {
-  // Check for templates in different locations
   const possiblePaths = [
-    join(__dirname, '../templates'), // From bundled dist/main.js
-    join(__dirname, '../../templates'), // From dist/logics/ (dev)
-    join(__dirname, '../../../templates'), // Alternative path
-    join(process.cwd(), 'templates'), // Current working directory
+    join(__dirname, '../templates'),
+    join(__dirname, '../../templates'),
+    join(__dirname, '../../../templates'),
+    join(process.cwd(), 'templates'),
   ];
 
   for (const p of possiblePaths) {
@@ -24,22 +25,25 @@ function getTemplatesDir(): string {
     }
   }
 
-  return possiblePaths[0]; // Default to first path
+  return possiblePaths[0];
 }
 
-// Get dynamic templates directory
+/**
+ * Get dynamic templates directory
+ */
 function getDynamicTemplatesDir(): string {
-  const templatesDir = getTemplatesDir();
-  return join(templatesDir, 'dynamic');
+  return join(getTemplatesDir(), 'dynamic');
 }
 
 export interface TemplateFile {
   source: string;
   dest: string;
-  template?: boolean; // If true, file content should be processed
+  template?: boolean;
 }
 
-// Base template files (always included)
+/**
+ * Get template files based on template type
+ */
 export async function getTemplateFiles(
   templateType: 'base' | 'full-pack'
 ): Promise<TemplateFile[]> {
@@ -47,10 +51,7 @@ export async function getTemplateFiles(
   const files: TemplateFile[] = [];
 
   if (templateType === 'base') {
-    // Return minimal base structure
-    return [
-      // We'll generate these dynamically instead
-    ];
+    return [];
   }
 
   if (templateType === 'full-pack') {
@@ -61,15 +62,16 @@ export async function getTemplateFiles(
   return files;
 }
 
-// Feature-specific files
+/**
+ * Get feature-specific files (currently handled dynamically)
+ */
 export async function getFeatureFiles(_features: FeatureFlags): Promise<TemplateFile[]> {
-  // For now, we generate feature files dynamically in ProjectCreator
-  // This function can be extended to copy pre-made template files
-
   return [];
 }
 
-// Helper to get all files recursively from a directory
+/**
+ * Recursively get all files from a directory
+ */
 async function getFilesRecursive(dir: string, relativePath: string): Promise<TemplateFile[]> {
   const files: TemplateFile[] = [];
 
@@ -84,7 +86,6 @@ async function getFilesRecursive(dir: string, relativePath: string): Promise<Tem
     const destPath = relativePath ? join(relativePath, entry.name) : entry.name;
 
     if (entry.isDirectory()) {
-      // Skip node_modules and other common directories
       if (entry.name === 'node_modules' || entry.name === '.git') {
         continue;
       }
@@ -102,7 +103,7 @@ async function getFilesRecursive(dir: string, relativePath: string): Promise<Tem
 }
 
 /**
- * Read and process a dynamic template file
+ * Process a template file with the given context
  */
 function processTemplateFile(templateName: string, context: TemplateContext): string | null {
   const dynamicDir = getDynamicTemplatesDir();
@@ -112,7 +113,7 @@ function processTemplateFile(templateName: string, context: TemplateContext): st
     return null;
   }
 
-  const engine = createTemplateEngine(context.features, {
+  const engine = createTemplateEngineFromFeatures(context.features, {
     projectName: context.projectName as string,
     author: context.author as string,
     description: context.description as string,
@@ -122,15 +123,16 @@ function processTemplateFile(templateName: string, context: TemplateContext): st
   return engine.processFile(templatePath);
 }
 
-// Get source file content for a specific template
+/**
+ * Get source file content for a specific template
+ */
 export async function getSourceFileContent(
-  templateId: string,
+  _templateId: string,
   features: FeatureFlags,
   projectConfig?: { projectName?: string; author?: string; description?: string; license?: string }
 ): Promise<Map<string, string>> {
   const contentMap = new Map<string, string>();
 
-  // Create template context
   const context: TemplateContext = {
     features,
     projectName: projectConfig?.projectName || 'my-app',
@@ -141,49 +143,44 @@ export async function getSourceFileContent(
     providerOrder: [],
   };
 
-  // Try to use dynamic templates first
   const dynamicDir = getDynamicTemplatesDir();
 
   // Generate main.tsx content
-  const mainContent = processTemplateFile('main.tsx.template', context);
+  const mainContent = processTemplateFile('main.tsx.hbs', context);
   contentMap.set('src/main.tsx', mainContent || generateMainTsx(features));
 
   // Generate App.tsx content
-  const appContent = processTemplateFile('App.tsx.template', context);
+  const appContent = processTemplateFile('App.tsx.hbs', context);
   contentMap.set('src/App.tsx', appContent || generateAppTsx(features));
 
   // Generate App.css content
-  const cssContent = processTemplateFile('App.css.template', context);
+  const cssContent = processTemplateFile('App.css.hbs', context);
   contentMap.set('src/App.css', cssContent || generateAppCss(features));
 
   // Generate vite.config.ts content
-  const viteContent = processTemplateFile('vite.config.ts.template', context);
+  const viteContent = processTemplateFile('vite.config.ts.hbs', context);
   if (viteContent) {
     contentMap.set('vite.config.ts', viteContent);
   }
 
   // Redux files
   if (features.redux) {
-    const storeContent = processTemplateFile('store/store.ts.template', context);
+    const storeContent = processTemplateFile('store/store.ts.hbs', context);
     contentMap.set('src/store/store.ts', storeContent || generateReduxStore());
 
-    const sliceContent = processTemplateFile('store/slices/appSlice.ts.template', context);
+    const sliceContent = processTemplateFile('store/slices/appSlice.ts.hbs', context);
     contentMap.set('src/store/slices/appSlice.ts', sliceContent || generateReduxSlice());
   }
 
   // i18n files
   if (features.i18n) {
-    const i18nConfigContent = processTemplateFile('i18n/config.ts.template', context);
-    if (i18nConfigContent) {
-      contentMap.set('src/i18n/config.ts', i18nConfigContent);
-    } else {
-      contentMap.set('src/i18n/config.ts', generateI18nConfig());
-    }
+    const i18nConfigContent = processTemplateFile('i18n/config.ts.hbs', context);
+    contentMap.set('src/i18n/config.ts', i18nConfigContent || generateI18nConfig());
 
-    // Translation files - read directly without processing (JSON files)
+    // Translation files
     const locales = ['en', 'pt', 'es'];
     for (const locale of locales) {
-      const localePath = join(dynamicDir, `i18n/locales/${locale}.json.template`);
+      const localePath = join(dynamicDir, `i18n/locales/${locale}.json.hbs`);
       if (existsSync(localePath)) {
         const content = readFileSync(localePath, 'utf-8');
         contentMap.set(`src/i18n/locales/${locale}.json`, content);
@@ -194,9 +191,9 @@ export async function getSourceFileContent(
   }
 
   // Generate POSSIBILITIES.md
-  const possibilitiesContent = processTemplateFile('POSSIBILITIES.md.template', {
+  const possibilitiesContent = processTemplateFile('POSSIBILITIES.md.hbs', {
     ...context,
-    packageManager: 'npm', // Default, will be replaced by ProjectCreator
+    packageManager: 'npm',
   });
   if (possibilitiesContent) {
     contentMap.set('POSSIBILITIES.md', possibilitiesContent);
@@ -206,7 +203,7 @@ export async function getSourceFileContent(
 }
 
 // ============================================================================
-// FALLBACK GENERATORS (used when templates are not available)
+// FALLBACK GENERATORS
 // ============================================================================
 
 function generateMainTsx(features: FeatureFlags): string {
@@ -259,7 +256,6 @@ function generateAppTsx(features: FeatureFlags): string {
     : '';
 
   const titleStyles = features.tailwindcss ? 'className="text-4xl font-bold text-white mb-4"' : '';
-
   const descStyles = features.tailwindcss ? 'className="text-gray-400"' : '';
 
   return `function App() {
