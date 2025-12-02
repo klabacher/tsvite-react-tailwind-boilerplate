@@ -152,9 +152,6 @@ describe('Accessibility (a11y)', () => {
       const { container } = renderApp(<App />);
       
       // Check for semantic or ARIA landmarks
-      const hasMain = container.querySelector('main, [role="main"]');
-      const hasNav = container.querySelector('nav, [role="navigation"]');
-      
       // At minimum, the app should have a main content area
       // (may be implicit through semantic HTML)
       expect(container.children.length).toBeGreaterThan(0);

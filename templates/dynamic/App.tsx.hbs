@@ -178,7 +178,7 @@ function HomePage({ isDark }: { isDark: boolean }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.counter.title')}{{else}}useState Hook{{/if}}</h3>
+            <h2 className="text-xl font-bold">{{#if features.i18n}}{t('features.counter.title')}{{else}}useState Hook{{/if}}</h2>
           </div>
           <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {{#if features.i18n}}{t('features.counter.description')}{{else}}Click the button to increment the counter{{/if}}
@@ -208,7 +208,7 @@ function HomePage({ isDark }: { isDark: boolean }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.timer.title')}{{else}}useEffect Hook{{/if}}</h3>
+            <h2 className="text-xl font-bold">{{#if features.i18n}}{t('features.timer.title')}{{else}}useEffect Hook{{/if}}</h2>
           </div>
           <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {{#if features.i18n}}{t('features.timer.description')}{{else}}Auto-incrementing timer using useEffect{{/if}}
@@ -356,8 +356,9 @@ function App() {
 
         {/* Tech Stack Logos */}
         <section className="mb-16">
+          <h2 className="sr-only">Technologies Used</h2>
           <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
-            <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="group" aria-label="React">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -367,7 +368,7 @@ function App() {
 
             <span className={`text-3xl font-light ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>+</span>
 
-            <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://vitejs.dev" target="_blank" rel="noopener noreferrer" className="group" aria-label="Vite">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -377,7 +378,7 @@ function App() {
 
             <span className={`text-3xl font-light ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>+</span>
 
-            <a href="https://typescriptlang.org" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://typescriptlang.org" target="_blank" rel="noopener noreferrer" className="group" aria-label="TypeScript">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -388,7 +389,7 @@ function App() {
 {{#if features.tailwindcss}}
             <span className={`text-3xl font-light ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>+</span>
 
-            <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className="group" aria-label="Tailwind CSS">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -400,7 +401,7 @@ function App() {
 {{#if features.redux}}
             <span className={`text-3xl font-light ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>+</span>
 
-            <a href="https://redux-toolkit.js.org" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://redux-toolkit.js.org" target="_blank" rel="noopener noreferrer" className="group" aria-label="Redux Toolkit">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -412,7 +413,7 @@ function App() {
 {{#if features.reactRouter}}
             <span className={`text-3xl font-light ${isDark ? 'text-gray-600' : 'text-gray-300'}`}>+</span>
 
-            <a href="https://reactrouter.com" target="_blank" rel="noopener noreferrer" className="group">
+            <a href="https://reactrouter.com" target="_blank" rel="noopener noreferrer" className="group" aria-label="React Router">
               <div className={`p-4 rounded-2xl transition-all duration-300 hover:scale-110 ${
                 isDark ? 'bg-gray-800/50 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50 shadow-lg'
               }`}>
@@ -468,7 +469,7 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.counter.title')}{{else}}useState Hook{{/if}}</h3>
+              <h2 className="text-xl font-bold">{{#if features.i18n}}{t('features.counter.title')}{{else}}useState Hook{{/if}}</h2>
             </div>
             <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               {{#if features.i18n}}{t('features.counter.description')}{{else}}Click the button to increment the counter{{/if}}
@@ -498,7 +499,7 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.timer.title')}{{else}}useEffect Hook{{/if}}</h3>
+              <h2 className="text-xl font-bold">{{#if features.i18n}}{t('features.timer.title')}{{else}}useEffect Hook{{/if}}</h2>
             </div>
             <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               {{#if features.i18n}}{t('features.timer.description')}{{else}}Auto-incrementing timer using useEffect{{/if}}
@@ -543,7 +544,7 @@ function App() {
             <div className="p-2 bg-purple-500/20 rounded-xl">
               <ReduxLogo />
             </div>
-            <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.redux.title')}{{else}}Redux Theme Selector{{/if}}</h3>
+            <h2 className="text-xl font-bold">{{#if features.i18n}}{t('features.redux.title')}{{else}}Redux Theme Selector{{/if}}</h2>
           </div>
           <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {{#if features.i18n}}{t('features.redux.description')}{{else}}Theme state managed by Redux Toolkit{{/if}}
@@ -587,7 +588,7 @@ function App() {
             <div className="p-2 bg-green-500/20 rounded-xl">
               <span className="text-2xl">🌐</span>
             </div>
-            <h3 className="text-xl font-bold">{t('features.i18n.title')}</h3>
+            <h2 className="text-xl font-bold">{t('features.i18n.title')}</h2>
           </div>
           <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             {t('features.i18n.description')}
@@ -663,8 +664,8 @@ function App() {
         </div>
       </main>
 
-      <footer style={{ marginTop: '2rem' }}>
-        <p>Made with ❤️ by <a href="https://github.com/klabacher" style={{ color: '#667eea' }}>João Vitor Klabacher</a></p>
+      <footer className="app-footer">
+        <p>Made with ❤️ by <a href="https://github.com/klabacher" className="author-link">João Vitor Klabacher</a></p>
       </footer>
     </div>
 {{/if}}
