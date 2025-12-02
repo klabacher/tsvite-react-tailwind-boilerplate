@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
-import type { TestProfile } from '../types/index.js';
+import type { TestProfile, TestProfileConfig } from '../types/index.js';
 import { testProfiles } from '../config/testProfiles.js';
 
 interface TestProfileSelectProps {
@@ -40,12 +40,12 @@ export function TestProfileSelect({
     <Box flexDirection="column">
       <Box marginBottom={1}>
         <Text color="cyan" bold>
-          🧪 Selecione o perfil de testes
+          🧪 Select Test Profile
         </Text>
       </Box>
 
       <Box marginBottom={1}>
-        <Text dimColor>Escolha o nível de testes que deseja incluir no projeto.</Text>
+        <Text dimColor>Choose the level of testing you want to include in your project.</Text>
       </Box>
 
       {profileOrder.map((profile, index) => {
@@ -71,12 +71,9 @@ export function TestProfileSelect({
             </Box>
             <Box marginLeft={4}>
               <Text color="gray">
-                Coverage:{' '}
-                <Text color={getCoverageColor(config.coverageThreshold)}>
-                  {config.coverageThreshold}%
-                </Text>
+                Coverage: <Text color={getCoverageColor(config.coverage)}>{config.coverage}%</Text>
                 {' • '}
-                Testes: {getTestTypesLabel(config.includeTests)}
+                Tests: {getTestTypesLabel(config)}
               </Text>
             </Box>
           </Box>
@@ -86,8 +83,8 @@ export function TestProfileSelect({
       <Box marginTop={2} flexDirection="column">
         <Box>
           <Text dimColor>
-            <Text color="cyan">↑↓</Text> navegar • <Text color="cyan">Enter</Text> selecionar •{' '}
-            <Text color="cyan">S/Esc</Text> pular (sem testes)
+            <Text color="cyan">↑↓</Text> navigate • <Text color="cyan">Enter</Text> select •{' '}
+            <Text color="cyan">S/Esc</Text> skip (no tests)
           </Text>
         </Box>
       </Box>
@@ -102,18 +99,20 @@ function getCoverageColor(threshold: number): string {
   return 'gray';
 }
 
-function getTestTypesLabel(includeTests: {
-  unit: boolean;
-  integration: boolean;
-  a11y: boolean;
-  performance: boolean;
-  snapshot: boolean;
-}): string {
-  const types: string[] = [];
-  if (includeTests.unit) types.push('Unit');
-  if (includeTests.integration) types.push('Integration');
-  if (includeTests.a11y) types.push('A11y');
-  if (includeTests.performance) types.push('Performance');
-  if (includeTests.snapshot) types.push('Snapshot');
-  return types.length > 0 ? types.join(', ') : 'Apenas setup';
+function getTestTypesLabel(config: TestProfileConfig): string {
+  if (config.testTypes.length === 0) return 'Setup only';
+
+  const typeLabels: Record<string, string> = {
+    unit: 'Unit',
+    integration: 'Integration',
+    accessibility: 'A11y',
+    performance: 'Performance',
+    snapshot: 'Snapshot',
+    redux: 'Redux',
+    router: 'Router',
+    i18n: 'i18n',
+    tailwind: 'Tailwind',
+  };
+
+  return config.testTypes.map(t => typeLabels[t] || t).join(', ');
 }
