@@ -5,7 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Dev-0.2.1] - 2025-12-01
+
+Small visual fix
+
+### Fixed
+
+- **Fixed Git check** - Replaced `require(child_process)` with the equivalent `import`
+- **Fixed ProjectNameInput conditional** - Added `.trim()` to initial value in `src/components/ProjectNameInput.tsx#ProjectNameInput:37`
+- **Fixed SVG icons** - Fixed `transform` CSS style for Vite and TypeScript icons
+
+### TODO
+
+- **Show suggestion on error** - `src/components/ProjectNameInput.tsx#handleSubmit:36`
+
+## [0.2.0] - 01/12/25
+
+Entire Template refactor for better Dx and results, fixed errors
 
 ### Added
 
