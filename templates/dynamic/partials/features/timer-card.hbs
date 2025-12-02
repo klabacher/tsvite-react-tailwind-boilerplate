@@ -1,0 +1,43 @@
+{{!-- useEffect Timer Showcase Card --}}
+<div className={`p-8 rounded-3xl transition-all duration-300 ${
+  isDark
+    ? 'bg-gray-800/50 border border-gray-700/50'
+    : 'bg-white shadow-xl border border-gray-100'
+}`}>
+  <div className="flex items-center gap-3 mb-6">
+    <div className="p-2 bg-purple-500/20 rounded-xl">
+      <svg className="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.timer.title')}{{else}}useEffect Hook{{/if}}</h3>
+  </div>
+  <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+    {{#if features.i18n}}{t('features.timer.description')}{{else}}Auto-incrementing timer using useEffect{{/if}}
+  </p>
+  <div className="text-center">
+    <div className={`text-6xl font-bold mb-6 font-mono ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+      {String(Math.floor(autoCount / 60)).padStart(2, '0')}:{String(autoCount % 60).padStart(2, '0')}
+    </div>
+    <div className="flex justify-center gap-4">
+      <button
+        onClick={() => setIsRunning(!isRunning)}
+        className={`px-6 py-3 font-semibold rounded-full transition-all duration-300 hover:scale-105 shadow-lg cursor-pointer ${
+          isRunning
+            ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white hover:shadow-red-500/25'
+            : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white hover:shadow-green-500/25'
+        }`}
+      >
+        {isRunning ? {{#if features.i18n}}t('common.stop'){{else}}'Stop'{{/if}} : {{#if features.i18n}}t('common.start'){{else}}'Start'{{/if}}}
+      </button>
+      <button
+        onClick={() => setAutoCount(0)}
+        className={`px-6 py-3 font-semibold rounded-full transition-all duration-300 hover:scale-105 cursor-pointer ${
+          isDark ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+        }`}
+      >
+        {{#if features.i18n}}{t('common.reset')}{{else}}Reset{{/if}}
+      </button>
+    </div>
+  </div>
+</div>

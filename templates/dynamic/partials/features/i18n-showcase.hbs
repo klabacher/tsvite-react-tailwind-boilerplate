@@ -1,0 +1,19 @@
+{{!-- i18n Showcase Section --}}
+<section className={`p-8 rounded-3xl mb-16 transition-all duration-300 ${
+  isDark
+    ? 'bg-gradient-to-r from-green-900/30 to-teal-900/30 border border-green-500/20'
+    : 'bg-gradient-to-r from-green-50 to-teal-50 border border-green-200'
+}`}>
+  <div className="flex items-center gap-3 mb-6">
+    <div className="p-2 bg-green-500/20 rounded-xl">
+      <span className="text-2xl">🌐</span>
+    </div>
+    <h3 className="text-xl font-bold">{t('features.i18n.title')}</h3>
+  </div>
+  <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+    {t('features.i18n.description')}
+  </p>
+  <div className="flex justify-center">
+    <LanguageSelector isDark={isDark} />
+  </div>
+</section>

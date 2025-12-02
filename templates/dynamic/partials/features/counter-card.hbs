@@ -1,0 +1,29 @@
+{{!-- useState Showcase Card --}}
+<div className={`p-8 rounded-3xl transition-all duration-300 ${
+  isDark
+    ? 'bg-gray-800/50 border border-gray-700/50'
+    : 'bg-white shadow-xl border border-gray-100'
+}`}>
+  <div className="flex items-center gap-3 mb-6">
+    <div className="p-2 bg-blue-500/20 rounded-xl">
+      <svg className="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+      </svg>
+    </div>
+    <h3 className="text-xl font-bold">{{#if features.i18n}}{t('features.counter.title')}{{else}}useState Hook{{/if}}</h3>
+  </div>
+  <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+    {{#if features.i18n}}{t('features.counter.description')}{{else}}Click the button to increment the counter{{/if}}
+  </p>
+  <div className="text-center">
+    <div className={`text-6xl font-bold mb-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+      {count}
+    </div>
+    <button
+      onClick={() => setCount((c) => c + 1)}
+      className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25 cursor-pointer"
+    >
+      {{#if features.i18n}}{t('common.increment')}{{else}}Increment{{/if}}
+    </button>
+  </div>
+</div>
