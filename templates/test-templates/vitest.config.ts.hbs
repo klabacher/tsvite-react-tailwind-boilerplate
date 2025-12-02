@@ -1,12 +1,16 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+{{#if features.tailwindcss}}
+  import tailwindcss from '@tailwindcss/vite';
+{{/if}}
 
 export default defineConfig({
-  optimizeDeps: {
-    rolldownOptions: {
-      plugins: [react()],
-    },
-  },
+  plugins: [
+  {{#if features.tailwindcss}}
+  tailwindcss(),
+  {{/if}}
+  react()
+  ],
   test: {
     globals: true,
     environment: 'jsdom',

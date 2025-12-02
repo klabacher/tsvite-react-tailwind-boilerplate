@@ -1,18 +1,10 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'; import react from '@vitejs/plugin-react';
 {{#if features.tailwindcss}}
 import tailwindcss from '@tailwindcss/vite';
 {{/if}}
 
-// https://vite.dev/config/
-export default defineConfig({
-  optimizeDeps: {
-    rolldownOptions: {
-      plugins: [
+// https://vite.dev/config/ export default defineConfig({ plugins: [
 {{#if features.tailwindcss}}
-        tailwindcss(),
+  tailwindcss(),
 {{/if}}
-        react(),
-    ],
-  },
-});
+react(), ], });

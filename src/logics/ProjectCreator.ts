@@ -187,13 +187,9 @@ async function generateViteConfig(targetDir: string, features: FeatureFlags): Pr
 
 // https://vite.dev/config/
 export default defineConfig({
-  optimizeDeps: {
-    rolldownOptions: {
       plugins: [
-        ${plugins.join(',\n ')}
+        ${plugins.join(',\n       ')}
       ],
-    },
-  },
 });
 `;
   await writeFile(join(targetDir, 'vite.config.ts'), content);

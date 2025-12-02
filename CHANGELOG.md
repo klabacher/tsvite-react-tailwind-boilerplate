@@ -5,29 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3-beta.1] - 2025-12-02
+
+### Fixed
+
+- **Vite plugins configuration** - Fixed Tailwind CSS v4 styles not loading by moving plugins from `optimizeDeps.rolldownOptions.plugins` to root `plugins` array in `vite.config.ts`
+
 ## [0.2.2] - 2025-12-01
 
-### Small improvements and stability
+### Fixed
 
-- **Patch 0.2.1** - `clip-rule` to `clipRule` and `fill-rule` to `fillRule`
+- **SVG attributes** - Changed `clip-rule` to `clipRule` and `fill-rule` to `fillRule` for React JSX compatibility
 
-- **Dependencie Fix** - `vite.config.ts`/`vitest.config.ts` add `rolldown` updated configuration
+### Changed
+
+- **Vite/Vitest config** - Updated configuration for rolldown compatibility (note: this was reverted in 0.2.3 due to incorrect plugin placement)
 
 ## [0.2.1] - 2025-12-01
 
-Small visual fix
+### Fixed
 
-### fix Implemented
+- **Git check** - Replaced `require(child_process)` with the equivalent `import`
+- **ProjectNameInput conditional** - Added `.trim()` to initial value in `src/components/ProjectNameInput.tsx`
+- **SVG icons** - Fixed `transform` CSS style for Vite and TypeScript icons
 
-- **Fixed Git check** - Replaced `require(child_process)` with the equivalent `import`
-- **Fixed ProjectNameInput conditional** - Added `.trim()` to initial value in `src/components/ProjectNameInput.tsx#ProjectNameInput:37`
-- **Fixed SVG icons** - Fixed `transform` CSS style for Vite and TypeScript icons
-
-### TODO
-
-- **Show suggestion on error** - `src/components/ProjectNameInput.tsx#handleSubmit:36`
-
-## [0.2.0] - 01/12/25
+## [0.2.0] - 2025-12-01
 
 Entire Template refactor for better Dx and results, fixed errors
 
@@ -323,7 +325,7 @@ src/
 
 ## Roadmap
 
-### [0.1.0] - Planned
+### [0.3.0] - Planned
 
 - [ ] Supabase integration template
 - [ ] Custom TypeScript configurations
@@ -331,7 +333,7 @@ src/
 - [ ] Template caching for faster project creation
 - [ ] Update checker for CLI
 
-### [0.2.0] - Future
+### [0.4.0] - Future
 
 - [ ] Monorepo support
 - [ ] Docker configuration templates
