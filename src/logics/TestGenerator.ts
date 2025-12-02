@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FeatureFlags, TestProfileConfig } from '../types/index.js';
+import type { FeatureFlags, TestProfileConfig } from '../types/index.js';
 import { testProfiles, getCoverageThreshold } from '../config/testProfiles.js';
+import { createTemplateEngineFromFeatures, type TemplateContext } from './TemplateEngine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,10 +13,10 @@ const __dirname = path.dirname(__filename);
  */
 function getTestTemplatesDir(): string {
   const possiblePaths = [
-    path.resolve(__dirname, '../templates/test-templates'), // From bundled dist/main.js
-    path.resolve(__dirname, '../../templates/test-templates'), // From dist/logics/ (dev)
-    path.resolve(__dirname, '../../../templates/test-templates'), // Alternative path
-    path.join(process.cwd(), 'templates/test-templates'), // Current working directory
+    path.resolve(__dirname, '../templates/test-templates'),
+    path.resolve(__dirname, '../../templates/test-templates'),
+    path.resolve(__dirname, '../../../templates/test-templates'),
+    path.join(process.cwd(), 'templates/test-templates'),
   ];
 
   for (const p of possiblePaths) {
@@ -24,11 +25,13 @@ function getTestTemplatesDir(): string {
     }
   }
 
-  return possiblePaths[0]; // Default to first path
+  return possiblePaths[0];
 }
 
 /**
  * TestGenerator - Generates test files from templates based on features and profile
+ *
+ * Now uses the shared TemplateEngine (Handlebars-based) instead of custom regex parsing.
  */
 export class TestGenerator {
   private templatesDir: string;
@@ -42,12 +45,24 @@ export class TestGenerator {
   }
 
   /**
+   * Check if profile includes a specific test type
+   */
+  private includesTestType(type: string): boolean {
+    return this.profile.testTypes.includes(type as TestProfileConfig['testTypes'][number]);
+  }
+
+  /**
    * Read a template file from the templates directory
    */
   private readTemplate(templateName: string): string {
+    // Support both .hbs and legacy .template extensions
+    const hbsPath = path.join(this.templatesDir, templateName.replace('.template', '.hbs'));
     const templatePath = path.join(this.templatesDir, templateName);
+
+    const pathToRead = fs.existsSync(hbsPath) ? hbsPath : templatePath;
+
     try {
-      return fs.readFileSync(templatePath, 'utf-8');
+      return fs.readFileSync(pathToRead, 'utf-8');
     } catch {
       console.warn(`Template ${templateName} not found, using inline fallback`);
       return '';
@@ -55,162 +70,12 @@ export class TestGenerator {
   }
 
   /**
-   * Find the matching closing tag for a block, handling nested blocks
+   * Create template context with all features and computed values
    */
-  private findMatchingClose(
-    template: string,
-    startIndex: number,
-    openTag: string,
-    closeTag: string
-  ): number {
-    let depth = 1;
-    let pos = startIndex;
-
-    while (pos < template.length && depth > 0) {
-      const nextOpen = template.indexOf(openTag, pos);
-      const nextClose = template.indexOf(closeTag, pos);
-
-      if (nextClose === -1) {
-        // No closing tag found
-        return -1;
-      }
-
-      if (nextOpen !== -1 && nextOpen < nextClose) {
-        // Found another opening tag first
-        depth++;
-        pos = nextOpen + openTag.length;
-      } else {
-        // Found closing tag
-        depth--;
-        if (depth === 0) {
-          return nextClose;
-        }
-        pos = nextClose + closeTag.length;
-      }
-    }
-
-    return -1;
-  }
-
-  /**
-   * Find {{else}} at the same nesting level (not inside nested #if blocks)
-   */
-  private findElseAtSameLevel(content: string): number {
-    let depth = 0;
-    let pos = 0;
-
-    while (pos < content.length) {
-      const nextIf = content.indexOf('{{#if', pos);
-      const nextElse = content.indexOf('{{else}}', pos);
-      const nextEndIf = content.indexOf('{{/if}}', pos);
-
-      // Find the earliest occurrence
-      const positions = [
-        { type: 'if', pos: nextIf },
-        { type: 'else', pos: nextElse },
-        { type: 'endif', pos: nextEndIf },
-      ]
-        .filter(p => p.pos !== -1)
-        .sort((a, b) => a.pos - b.pos);
-
-      if (positions.length === 0) break;
-
-      const next = positions[0];
-
-      if (next.type === 'if') {
-        depth++;
-        pos = next.pos + 5; // length of '{{#if'
-      } else if (next.type === 'endif') {
-        depth--;
-        pos = next.pos + 7; // length of '{{/if}}'
-      } else if (next.type === 'else') {
-        if (depth === 0) {
-          return next.pos;
-        }
-        pos = next.pos + 8; // length of '{{else}}'
-      }
-    }
-
-    return -1;
-  }
-
-  /**
-   * Process template conditionals with proper nested block handling
-   */
-  private processConditionals(template: string): string {
-    const openRegex = /\{\{#if\s+(\w+)\}\}/g;
-    let result = template;
-    let match;
-
-    // Reset lastIndex to ensure we start from the beginning
-    openRegex.lastIndex = 0;
-
-    while ((match = openRegex.exec(result)) !== null) {
-      const fullOpenTag = match[0];
-      const feature = match[1];
-      const startIndex = match.index;
-      const contentStart = startIndex + fullOpenTag.length;
-      const closeIndex = this.findMatchingClose(result, contentStart, '{{#if', '{{/if}}');
-
-      if (closeIndex === -1) continue;
-
-      const fullContent = result.substring(contentStart, closeIndex);
-
-      // Find {{else}} at the same nesting level
-      const elseIndex = this.findElseAtSameLevel(fullContent);
-
-      let ifContent: string;
-      let elseContent: string;
-
-      if (elseIndex !== -1) {
-        ifContent = fullContent.substring(0, elseIndex);
-        elseContent = fullContent.substring(elseIndex + '{{else}}'.length);
-      } else {
-        ifContent = fullContent;
-        elseContent = '';
-      }
-
-      const featureValue = this.getFeatureValue(feature);
-      // Recursively process the chosen content to handle nested conditionals
-      const replacement = featureValue
-        ? this.processConditionals(ifContent)
-        : this.processConditionals(elseContent);
-
-      result =
-        result.substring(0, startIndex) +
-        replacement +
-        result.substring(closeIndex + '{{/if}}'.length);
-
-      // Reset regex to search from the start since we modified the string
-      openRegex.lastIndex = 0;
-    }
-
-    return result;
-  }
-
-  /**
-   * Process template variables ({{variable}})
-   */
-  private processVariables(template: string): string {
-    let result = template;
-
-    // Replace {{coverageThreshold}} with actual value
-    result = result.replace(
-      /\{\{coverageThreshold\}\}/g,
-      String(getCoverageThreshold(this.features.testProfile || 'standard'))
-    );
-
-    // Replace {{custom}} based on feature set
-    result = result.replace(/\{\{custom\}\}/g, String(this.isCustomSetup()));
-
-    return result;
-  }
-
-  /**
-   * Get feature value from features object
-   */
-  private getFeatureValue(feature: string): boolean {
-    const featureMap: Record<string, boolean> = {
+  private createContext(): TemplateContext {
+    return {
+      features: this.features,
+      // Also expose features at top level for backwards compatibility with existing templates
       redux: this.features.redux,
       reactRouter: this.features.reactRouter,
       tailwindcss: this.features.tailwindcss,
@@ -218,9 +83,24 @@ export class TestGenerator {
       eslint: this.features.eslint,
       prettier: this.features.prettier,
       i18n: this.features.i18n || false,
+      // Computed values
       custom: this.isCustomSetup(),
+      coverageThreshold: getCoverageThreshold(this.features.testProfile || 'standard'),
+      // Required by TemplateContext
+      hasProviders: this.features.redux || this.features.reactRouter || this.features.i18n || false,
+      providerOrder: this.computeProviderOrder(),
     };
-    return featureMap[feature] ?? false;
+  }
+
+  /**
+   * Compute provider order for test utilities
+   */
+  private computeProviderOrder(): string[] {
+    const order: string[] = [];
+    if (this.features.i18n) order.push('i18n');
+    if (this.features.redux) order.push('redux');
+    if (this.features.reactRouter) order.push('router');
+    return order;
   }
 
   /**
@@ -231,22 +111,29 @@ export class TestGenerator {
   }
 
   /**
-   * Process a template with all transformations
+   * Process a template with the Handlebars-based TemplateEngine
    */
   private processTemplate(templateContent: string): string {
-    let result = templateContent;
-    result = this.processConditionals(result);
-    result = this.processVariables(result);
-    // Clean up extra blank lines
-    result = result.replace(/\n{3,}/g, '\n\n');
-    return result.trim() + '\n';
+    if (!templateContent.trim()) {
+      return '';
+    }
+
+    const context = this.createContext();
+    const engine = createTemplateEngineFromFeatures(this.features);
+
+    let result = engine.process(templateContent, context);
+
+    // Ensure proper line endings
+    result = result.trim() + '\n';
+
+    return result;
   }
 
   /**
    * Generate setup.ts content
    */
   generateSetup(): string {
-    const template = this.readTemplate('setup.ts.template');
+    const template = this.readTemplate('setup.ts.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -257,7 +144,7 @@ export class TestGenerator {
    * Generate test-utils.tsx content
    */
   generateTestUtils(): string {
-    const template = this.readTemplate('test-utils.tsx.template');
+    const template = this.readTemplate('test-utils.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -268,9 +155,9 @@ export class TestGenerator {
    * Generate App.test.tsx content
    */
   generateAppTest(): string {
-    if (!this.profile.includeTests.unit) return '';
+    if (!this.includesTestType('unit')) return '';
 
-    const template = this.readTemplate('App.test.tsx.template');
+    const template = this.readTemplate('App.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -281,9 +168,9 @@ export class TestGenerator {
    * Generate store.test.ts content (Redux only)
    */
   generateStoreTest(): string {
-    if (!this.features.redux || !this.profile.includeTests.unit) return '';
+    if (!this.features.redux || !this.includesTestType('redux')) return '';
 
-    const template = this.readTemplate('store.test.ts.template');
+    const template = this.readTemplate('store.test.ts.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -294,9 +181,9 @@ export class TestGenerator {
    * Generate router.test.tsx content (React Router only)
    */
   generateRouterTest(): string {
-    if (!this.features.reactRouter || !this.profile.includeTests.unit) return '';
+    if (!this.features.reactRouter || !this.includesTestType('router')) return '';
 
-    const template = this.readTemplate('router.test.tsx.template');
+    const template = this.readTemplate('router.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -307,10 +194,10 @@ export class TestGenerator {
    * Generate integration tests content
    */
   generateIntegrationTest(): string {
-    if (!this.profile.includeTests.integration) return '';
+    if (!this.includesTestType('integration')) return '';
     if (!this.features.redux && !this.features.reactRouter) return '';
 
-    const template = this.readTemplate('redux-integration.test.tsx.template');
+    const template = this.readTemplate('redux-integration.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -321,9 +208,9 @@ export class TestGenerator {
    * Generate a11y tests content
    */
   generateA11yTest(): string {
-    if (!this.profile.includeTests.a11y) return '';
+    if (!this.includesTestType('accessibility')) return '';
 
-    const template = this.readTemplate('a11y.test.tsx.template');
+    const template = this.readTemplate('a11y.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -334,9 +221,9 @@ export class TestGenerator {
    * Generate performance tests content
    */
   generatePerformanceTest(): string {
-    if (!this.profile.includeTests.performance) return '';
+    if (!this.includesTestType('performance')) return '';
 
-    const template = this.readTemplate('performance.test.tsx.template');
+    const template = this.readTemplate('performance.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -347,9 +234,9 @@ export class TestGenerator {
    * Generate tailwind tests content
    */
   generateTailwindTest(): string {
-    if (!this.features.tailwindcss || !this.profile.includeTests.unit) return '';
+    if (!this.features.tailwindcss || !this.includesTestType('tailwind')) return '';
 
-    const template = this.readTemplate('tailwind.test.tsx.template');
+    const template = this.readTemplate('tailwind.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -360,9 +247,9 @@ export class TestGenerator {
    * Generate i18n tests content
    */
   generateI18nTest(): string {
-    if (!this.features.i18n || !this.profile.includeTests.unit) return '';
+    if (!this.features.i18n || !this.includesTestType('i18n')) return '';
 
-    const template = this.readTemplate('i18n.test.tsx.template');
+    const template = this.readTemplate('i18n.test.tsx.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -373,7 +260,7 @@ export class TestGenerator {
    * Generate vitest.config.ts content
    */
   generateVitestConfig(): string {
-    const template = this.readTemplate('vitest.config.ts.template');
+    const template = this.readTemplate('vitest.config.ts.hbs');
     if (template) {
       return this.processTemplate(template);
     }
@@ -441,7 +328,9 @@ export class TestGenerator {
     return files.filter(f => f.content.trim().length > 0);
   }
 
-  // Fallback methods for when templates are not available
+  // ============================================================================
+  // FALLBACK METHODS
+  // ============================================================================
 
   private getFallbackSetup(): string {
     return `import '@testing-library/jest-dom';
