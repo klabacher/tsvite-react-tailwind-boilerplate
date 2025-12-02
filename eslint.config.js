@@ -5,7 +5,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist', 'node_modules', 'templates'] },
+  { ignores: ['dist', 'node_modules', 'templates', 'test-*'] },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
